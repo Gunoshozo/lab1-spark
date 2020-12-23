@@ -20,7 +20,40 @@ object Main {
     val stationData = sc.textFile("G://data/stations.csv")
     val stations = stationData.map(row => row.split(",", -1))
 
-    val staionsInternal = stations.mapPartitions(rows => rows.map(row => {
+    val stationsIndexed = stations.keyBy(row => row(0).toInt)
+
+    stationsIndexed.foreach(x => {
+      print(x._1)
+      x._2.foreach(y => {
+        print(" ")
+        print(y)
+      })
+      println
+    })
+
+    val tripsByStartTerminals = trips.keyBy(row => row(4).toInt)
+
+    tripsByStartTerminals.take(50).foreach(x => {
+      print(x._1)
+      x._2.foreach(y => {
+        print(" ")
+        print(y)
+      })
+      println
+    })
+
+    val tripsByEndTerminals = trips.keyBy(row => row(7).toInt)
+
+    tripsByEndTerminals.take(50).foreach(x => {
+      print(x._1)
+      x._2.foreach(y => {
+        print(" ")
+        print(y)
+      })
+      println
+    })
+
+    val stationsInternal = stations.mapPartitions(rows => rows.map(row => {
       parseStation(row)
     }))
 
@@ -28,40 +61,44 @@ object Main {
       parseTrip(row)
     }))
     val tripsByStartStation = tripsInternal.keyBy(record => record.startStation)
-    //    val avgDurationByStartStation = tripsByStartStation
-    //      .mapValues(x => x.duration)
-    //      .groupByKey()
-    //      .mapValues(col => col.reduce((a, b) => a + b) / col.size)
-    //    time{avgDurationByStartStation.take(10).foreach(println)}
-    //    println("+++++++++++++++++++++++")
-    //    val avgDurationByStartStation2 = tripsByStartStation
-    //      .mapValues(x => x.duration)
-    //      .aggregateByKey((0, 0))(
-    //        (acc, value) => (acc._1 + value, acc._2 + 1),
-    //        (acc1, acc2) => (acc1._1 + acc2._1, acc1._2 + acc2._2))
-    //      .mapValues(acc => acc._1 / acc._2)
-    //    time{avgDurationByStartStation2.take(10).foreach(println)}
-    //    val firstGrouped1 = tripsByStartStation
-    //      .groupByKey()
-    //      .mapValues(x =>
-    //        x.toList.sortWith((trip1, trip2) =>
-    //          trip1.startDate.compareTo(trip2.startDate) < 0))
-    //    firstGrouped1.foreach(println)
-    //    val firstGrouped2 = tripsByStartStation
-    //      .reduceByKey((trip1, trip2) =>
-    //        if (trip1.startDate.compareTo(trip2.startDate) < 0)
-    //          trip1 else trip2)
-    //    firstGrouped2.foreach(println)
+    val avgDurationByStartStation = tripsByStartStation
+      .mapValues(x => x.duration)
+      .groupByKey()
+      .mapValues(col => col.reduce((a, b) => a + b) / col.size)
+    time {
+      avgDurationByStartStation.take(10).foreach(println)
+    }
+    println("+++++++++++++++++++++++")
+    val avgDurationByStartStation2 = tripsByStartStation
+      .mapValues(x => x.duration)
+      .aggregateByKey((0, 0))(
+        (acc, value) => (acc._1 + value, acc._2 + 1),
+        (acc1, acc2) => (acc1._1 + acc2._1, acc1._2 + acc2._2))
+      .mapValues(acc => acc._1 / acc._2)
+    time {
+      avgDurationByStartStation2.take(10).foreach(println)
+    }
+    val firstGrouped1 = tripsByStartStation
+      .groupByKey()
+      .mapValues(x =>
+        x.toList.sortWith((trip1, trip2) =>
+          trip1.startDate.compareTo(trip2.startDate) < 0))
+    firstGrouped1.foreach(println)
+    val firstGrouped2 = tripsByStartStation
+      .reduceByKey((trip1, trip2) =>
+        if (trip1.startDate.compareTo(trip2.startDate) < 0)
+          trip1 else trip2)
+    firstGrouped2.foreach(println)
 
-    //getBikeWithMaxDuration(tripsInternal)
+    getBikeWithMaxDuration(tripsInternal)
 
-    //getMaxDistBetweenStations(staionsInternal)
+    getMaxDistBetweenStations(stationsInternal)
 
-    //getBikePathWithMaxDuration(tripsInternal)
+    getBikePathWithMaxDuration(tripsInternal)
 
     countBikes(tripsInternal)
 
-    //getUsersWithMoreThan3HoursTrips(tripsInternal)
+    getUsersWithMoreThan3HoursTrips(tripsInternal)
 
     sc.stop()
 
